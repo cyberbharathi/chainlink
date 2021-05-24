@@ -32,8 +32,8 @@ func (t *ETHABIDecodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		theABI StringParam
 	)
 	err = multierr.Combine(
-		vars.ResolveValue(&data, From(VariableExpr(t.Data), Input(inputs, 0))),
-		vars.ResolveValue(&theABI, From(NonemptyString(t.ABI))),
+		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data), JSONWithVarExprs(t.Data, vars, false), Inputs(inputs))), "data"),
+		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
 		return Result{Error: err}
