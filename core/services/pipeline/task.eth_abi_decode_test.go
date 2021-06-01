@@ -29,7 +29,7 @@ func TestETHABIDecodeTask(t *testing.T) {
 		{Value: "0x000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffebf0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000b666f6f206261722062617a000000000000000000000000000000000000000000"},
 	}
 
-	result := task.Run(context.Background(), pipeline.NewVars(), pipeline.JSONSerializable{}, inputs)
+	result := task.Run(context.Background(), pipeline.NewVarsFrom(nil), pipeline.JSONSerializable{}, inputs)
 	bs, _ := json.MarshalIndent(result.Value, "", "    ")
 	fmt.Println(string(bs))
 	fmt.Printf("%+v\n", result.Error)

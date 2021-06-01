@@ -2,10 +2,10 @@ package pipeline
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
 
@@ -32,7 +32,7 @@ func (t *ETHABIDecodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		theABI StringParam
 	)
 	err = multierr.Combine(
-		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data), JSONWithVarExprs(t.Data, vars, false), Inputs(inputs))), "data"),
+		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data, vars), JSONWithVarExprs(t.Data, vars, false), Inputs(inputs))), "data"),
 		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
@@ -44,7 +44,9 @@ func (t *ETHABIDecodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		argStr := strings.Split(part, " ")
-		argStr = trimStrings(argStr)
+		for i := range argStr {
+			argStr[i] = strings.TrimSpace(argStr[i])
+		}
 
 		var typeStr, name string
 		switch len(argStr) {
@@ -69,11 +71,6 @@ func (t *ETHABIDecodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		if err := args.UnpackIntoMap(out, []byte(data)); err != nil {
 			return Result{Error: err}
 		}
-	}
-
-	err = vars.Set(t.DotID(), out)
-	if err != nil {
-		return Result{Error: err}
 	}
 	return Result{Value: out}
 }

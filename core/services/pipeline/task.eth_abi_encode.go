@@ -22,16 +22,18 @@ func (t *ETHABIEncodeTask) Type() TaskType {
 }
 
 func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable, inputs []Result) (result Result) {
+	_, err := CheckInputs(inputs, 0, 1, 0)
+	if err != nil {
+		return Result{Error: err}
+	}
+
 	var (
-		inputValues SliceParam
+		inputValues MapParam
 		theABI      StringParam
 	)
-	err := multierr.Combine(
-		vars.ResolveValue(&inputValues,
-			From(VariableExpr(t.Data), Inputs(inputs)),
-			Require(Length(0, -1), MaxErrors(0)),
-		),
-		vars.ResolveValue(&theABI, From(NonemptyString(t.ABI))),
+	err = multierr.Combine(
+		errors.Wrap(ResolveParam(&inputValues, From(VarExpr(t.Data, vars), JSONWithVarExprs(t.Data, vars, false), Inputs(inputs))), "data"),
+		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
 		return Result{Error: err}
@@ -39,6 +41,7 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 
 	parts := strings.Split(string(theABI), ",")
 	var args abi.Arguments
+	var vals []interface{}
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		typeAndMaybeName := strings.Split(part, " ")
@@ -63,14 +66,15 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		}
 
 		args = append(args, abi.Argument{Type: typ, Name: name})
+
+		val, exists := inputValues[name]
+		if !exists {
+			return Result{Error: errors.Errorf("ETHABIEncode: argument '%v' is missing", name)}
+		}
+		vals = append(vals, val)
 	}
 
-	dataBytes, err := args.Pack(inputValues...)
-	if err != nil {
-		return Result{Error: err}
-	}
-
-	err = vars.Set(t.DotID(), dataBytes)
+	dataBytes, err := args.Pack(vals...)
 	if err != nil {
 		return Result{Error: err}
 	}

@@ -2,11 +2,11 @@ package pipeline
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
 
@@ -33,8 +33,8 @@ func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializab
 		theABI StringParam
 	)
 	err = multierr.Combine(
-		vars.ResolveValue(&log, From(VariableExpr(t.Log), Input(inputs, 0))),
-		vars.ResolveValue(&theABI, From(NonemptyString(t.ABI))),
+		errors.Wrap(ResolveParam(&log, From(VarExpr(t.Log, vars), Input(inputs, 0))), "log"),
+		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
 		return Result{Error: err}
@@ -45,7 +45,9 @@ func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializab
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		argStr := strings.Split(part, " ")
-		argStr = trimStrings(argStr)
+		for i := range argStr {
+			argStr[i] = strings.TrimSpace(argStr[i])
+		}
 
 		var typeStr, name string
 		var indexed bool
