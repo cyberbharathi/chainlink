@@ -35,6 +35,7 @@ import (
 	"github.com/smartcontractkit/chainlink/core/services/fluxmonitor"
 	"github.com/smartcontractkit/chainlink/core/services/health"
 	"github.com/smartcontractkit/chainlink/core/services/job"
+	"github.com/smartcontractkit/chainlink/core/services/keystore"
 	"github.com/smartcontractkit/chainlink/core/services/log"
 	"github.com/smartcontractkit/chainlink/core/services/offchainreporting"
 	"github.com/smartcontractkit/chainlink/core/services/pipeline"
@@ -69,7 +70,7 @@ type Application interface {
 	GetLogger() *logger.Logger
 	GetHealthChecker() health.Checker
 	GetStore() *strpkg.Store
-	GetOCRKeyStore() *offchainreporting.KeyStore // TODO: this should be replaced with a generic GetKeystore()
+	GetKeyStore() *keystore.KeyStore
 	GetStatsPusher() synchronization.StatsPusher
 	GetHeadBroadcaster() httypes.HeadBroadcasterRegistry
 	WakeSessionReaper()
@@ -102,27 +103,18 @@ type ChainlinkApplication struct {
 	BPTXM           *bulletprooftxmanager.BulletproofTxManager
 	StatsPusher     synchronization.StatsPusher
 	services.RunManager
-	RunQueue         services.RunQueue
-	JobSubscriber    services.JobSubscriber
-	LogBroadcaster   log.Broadcaster
-	EventBroadcaster postgres.EventBroadcaster
-	JobORM           job.ORM
-	jobSpawner       job.Spawner
-	pipelineRunner   pipeline.Runner
-	FluxMonitor      fluxmonitor.Service
-	webhookJobRunner webhook.JobRunner
-	Scheduler        *services.Scheduler
-	Store            *strpkg.Store
-	// TODO:
-	// moved OCR keystore from store to application in order to resolve:
-	// https://app.clubhouse.io/chainlinklabs/story/10097/remove-ocr-as-dependency-of-store-package
-
-	// waiting on this before combining and moving other keystores
-	// https://github.com/smartcontractkit/chainlink/pull/4447
-
-	// finally, keystore unification will be completed by:
-	// https://app.clubhouse.io/chainlinklabs/story/7735/combine-keystores
-	OCRKeyStore              *offchainreporting.KeyStore
+	RunQueue                 services.RunQueue
+	JobSubscriber            services.JobSubscriber
+	LogBroadcaster           log.Broadcaster
+	EventBroadcaster         postgres.EventBroadcaster
+	JobORM                   job.ORM
+	jobSpawner               job.Spawner
+	pipelineRunner           pipeline.Runner
+	FluxMonitor              fluxmonitor.Service
+	webhookJobRunner         webhook.JobRunner
+	Scheduler                *services.Scheduler
+	Store                    *strpkg.Store
+	KeyStore                 *keystore.KeyStore
 	ExternalInitiatorManager ExternalInitiatorManager
 	SessionReaper            utils.SleeperTask
 	shutdownOnce             sync.Once
@@ -288,17 +280,17 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 	}
 
 	scryptParams := utils.GetScryptParams(config)
-	ocrKeyStore := offchainreporting.NewKeyStore(store.DB, scryptParams)
+	keyStore := keystore.NewKeyStore(store.DB, scryptParams)
 
 	if (config.Dev() && config.P2PListenPort() > 0) || config.FeatureOffchainReporting() {
 		logger.Debug("Off-chain reporting enabled")
-		concretePW := offchainreporting.NewSingletonPeerWrapper(ocrKeyStore, config, store.DB)
+		concretePW := offchainreporting.NewSingletonPeerWrapper(keyStore.OCR, config, store.DB)
 		subservices = append(subservices, concretePW)
 		delegates[job.OffchainReporting] = offchainreporting.NewDelegate(
 			store.DB,
 			jobORM,
 			config,
-			ocrKeyStore,
+			keyStore.OCR,
 			pipelineRunner,
 			ethClient,
 			logBroadcaster,
@@ -339,7 +331,7 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 		webhookJobRunner:         webhookJobRunner,
 		Scheduler:                services.NewScheduler(store, runManager),
 		Store:                    store,
-		OCRKeyStore:              ocrKeyStore,
+		KeyStore:                 keyStore,
 		SessionReaper:            services.NewSessionReaper(store),
 		Exiter:                   os.Exit,
 		ExternalInitiatorManager: externalInitiatorManager,
@@ -568,8 +560,12 @@ func (app *ChainlinkApplication) GetStore() *strpkg.Store {
 	return app.Store
 }
 
-func (app *ChainlinkApplication) GetOCRKeyStore() *offchainreporting.KeyStore {
-	return app.OCRKeyStore
+// func (app *ChainlinkApplication) GetOCRKeyStore() *offchainreporting.KeyStore {
+// 	return app.GetKeyStore().OCR
+// }
+
+func (app *ChainlinkApplication) GetKeyStore() *keystore.KeyStore {
+	return app.KeyStore
 }
 
 func (app *ChainlinkApplication) GetLogger() *logger.Logger {
