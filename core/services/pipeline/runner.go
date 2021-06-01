@@ -193,9 +193,7 @@ type scheduler struct {
 	dependencies map[int64]uint
 	input        interface{}
 	waiting      uint
-	// roots are the tasks at the start of the pipeline
-	roots   []Task
-	results map[int64]TaskRunResult
+	results      map[int64]TaskRunResult
 
 	taskCh   chan *memoryTaskRun
 	resultCh chan TaskRunResult
