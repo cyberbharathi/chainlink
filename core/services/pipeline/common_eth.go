@@ -23,7 +23,7 @@ func parseABIString(theABI string, isLog bool) (name string, args abi.Arguments,
 	if len(matches) != 1 || len(matches[0]) != 3 {
 		return "", nil, nil, errors.Errorf("bad ABI specification: %v", theABI)
 	}
-	name = matches[0][1]
+	name = string(matches[0][1])
 	var argStrs [][]byte
 	if len(bytes.TrimSpace(matches[0][2])) > 0 {
 		argStrs = bytes.Split(matches[0][2], commaDelim)
@@ -37,8 +37,8 @@ func parseABIString(theABI string, isLog bool) (name string, args abi.Arguments,
 		parts := bytes.Split(argStr, spaceDelim)
 		var (
 			argParts [][]byte
-			name     []byte
 			typeStr  []byte
+			argName  []byte
 			indexed  bool
 		)
 		for i := range parts {
@@ -59,7 +59,7 @@ func parseABIString(theABI string, isLog bool) (name string, args abi.Arguments,
 				return "", nil, nil, errors.Errorf("bad ABI specification, missing argument name: %v", theABI)
 			}
 			typeStr = argParts[0]
-			name = argParts[1]
+			argName = argParts[1]
 
 		case 3:
 			if !isLog {
@@ -70,19 +70,19 @@ func parseABIString(theABI string, isLog bool) (name string, args abi.Arguments,
 				return "", nil, nil, errors.Errorf("bad ABI specification, unknown keyword '%v' between argument type and name: %v", string(argParts[1]), theABI)
 			}
 			typeStr = argParts[0]
-			name = argParts[2]
+			argName = argParts[2]
 			indexed = true
 
 		default:
-			return Result{Error: errors.Errorf("bad ABI specification, too many components in argument: %v", theABI)}
+			return "", nil, nil, errors.Errorf("bad ABI specification, too many components in argument: %v", theABI)
 		}
 		typ, err := abi.NewType(string(typeStr), "", nil)
 		if err != nil {
-			return Result{Error: err}
+			return "", nil, nil, errors.Errorf("bad ABI specification: %v", err.Error())
 		}
-		args = append(args, abi.Argument{Type: typ, Name: string(name), Indexed: indexed})
+		args = append(args, abi.Argument{Type: typ, Name: string(argName), Indexed: indexed})
 		if indexed {
-			indexedArgs = append(indexedArgs, abi.Argument{Type: typ, Name: name, Indexed: indexed})
+			indexedArgs = append(indexedArgs, abi.Argument{Type: typ, Name: string(argName), Indexed: indexed})
 		}
 	}
 	return name, args, indexedArgs, nil

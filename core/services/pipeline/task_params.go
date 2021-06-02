@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/smartcontractkit/chainlink/core/utils"
@@ -473,6 +475,32 @@ func (s *DecimalSliceParam) UnmarshalPipelineParam(val interface{}) error {
 
 	default:
 		return errors.Wrap(ErrBadInput, "DecimalSliceParam")
+	}
+	*s = dsp
+	return nil
+}
+
+type HashSliceParam []common.Hash
+
+func (s *HashSliceParam) UnmarshalPipelineParam(val interface{}) error {
+	var dsp HashSliceParam
+	switch v := val.(type) {
+	case nil:
+		dsp = nil
+	case []common.Hash:
+		dsp = v
+	case string:
+		err := json.Unmarshal([]byte(v), &dsp)
+		if err != nil {
+			return err
+		}
+	case []byte:
+		err := json.Unmarshal(v, &dsp)
+		if err != nil {
+			return err
+		}
+	default:
+		return errors.Wrap(ErrBadInput, "HashSliceParam")
 	}
 	*s = dsp
 	return nil

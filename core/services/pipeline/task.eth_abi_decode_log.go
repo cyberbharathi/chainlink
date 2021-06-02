@@ -41,20 +41,20 @@ func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializab
 		return Result{Error: err}
 	}
 
-	eventName, args, indexedArgs, err := parseABIString(string(theABI), true)
+	_, args, indexedArgs, err := parseABIString(string(theABI), true)
 	if err != nil {
 		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
 	}
 
 	out := make(map[string]interface{})
 	if len(data) > 0 {
-		if err := args.UnpackIntoMap(out, data); err != nil {
-			return Result{Error: err}
+		if err2 := args.UnpackIntoMap(out, []byte(data)); err2 != nil {
+			return Result{Error: errors.Wrap(ErrBadInput, err2.Error())}
 		}
 	}
 	err = abi.ParseTopicsIntoMap(out, indexedArgs, topics[1:])
 	if err != nil {
-		return Result{Error: err}
+		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
 	}
 	return Result{Value: out}
 }

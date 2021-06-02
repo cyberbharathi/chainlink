@@ -51,9 +51,9 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 	for _, arg := range args {
 		val, exists := inputValues[arg.Name]
 		if !exists {
-			return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: argument '%v' is missing", name)}
+			return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: argument '%v' is missing", arg.Name)}
 		}
-		val, err = convertToABIType(val, typ)
+		val, err = convertToABIType(val, arg.Type)
 		if err != nil {
 			return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: %v", err)}
 		}
