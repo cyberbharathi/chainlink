@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/smartcontractkit/chainlink/core/services/job"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
 	"github.com/smartcontractkit/chainlink/core/services/keystore/p2pkey"
 
 	"github.com/stretchr/testify/require"
@@ -65,7 +66,7 @@ observationSource = """
 	`
 )
 
-func MinimalOCRNonBootstrapSpec(contractAddress, transmitterAddress models.EIP55Address, peerID p2pkey.PeerID, keyBundleID models.Sha256Hash) string {
+func MinimalOCRNonBootstrapSpec(contractAddress, transmitterAddress ethkey.EIP55Address, peerID p2pkey.PeerID, keyBundleID models.Sha256Hash) string {
 	return fmt.Sprintf(minimalOCRNonBootstrapTemplate, contractAddress, peerID, transmitterAddress.Hex(), keyBundleID)
 }
 

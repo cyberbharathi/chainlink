@@ -6,9 +6,8 @@ import (
 	big "math/big"
 
 	common "github.com/ethereum/go-ethereum/common"
+	ethkey "github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
 	mock "github.com/stretchr/testify/mock"
-
-	models "github.com/smartcontractkit/chainlink/core/store/models"
 
 	types "github.com/ethereum/go-ethereum/core/types"
 )
@@ -19,11 +18,11 @@ type KeyStoreInterface struct {
 }
 
 // AddKey provides a mock function with given fields: key
-func (_m *KeyStoreInterface) AddKey(key *models.Key) error {
+func (_m *KeyStoreInterface) AddKey(key *ethkey.Key) error {
 	ret := _m.Called(key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.Key) error); ok {
+	if rf, ok := ret.Get(0).(func(*ethkey.Key) error); ok {
 		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
@@ -33,15 +32,15 @@ func (_m *KeyStoreInterface) AddKey(key *models.Key) error {
 }
 
 // AllKeys provides a mock function with given fields:
-func (_m *KeyStoreInterface) AllKeys() ([]models.Key, error) {
+func (_m *KeyStoreInterface) AllKeys() ([]ethkey.Key, error) {
 	ret := _m.Called()
 
-	var r0 []models.Key
-	if rf, ok := ret.Get(0).(func() []models.Key); ok {
+	var r0 []ethkey.Key
+	if rf, ok := ret.Get(0).(func() []ethkey.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Key)
+			r0 = ret.Get(0).([]ethkey.Key)
 		}
 	}
 
@@ -56,14 +55,14 @@ func (_m *KeyStoreInterface) AllKeys() ([]models.Key, error) {
 }
 
 // CreateNewKey provides a mock function with given fields:
-func (_m *KeyStoreInterface) CreateNewKey() (models.Key, error) {
+func (_m *KeyStoreInterface) CreateNewKey() (ethkey.Key, error) {
 	ret := _m.Called()
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func() models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func() ethkey.Key); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 error
@@ -77,14 +76,14 @@ func (_m *KeyStoreInterface) CreateNewKey() (models.Key, error) {
 }
 
 // EnsureFundingKey provides a mock function with given fields:
-func (_m *KeyStoreInterface) EnsureFundingKey() (models.Key, bool, error) {
+func (_m *KeyStoreInterface) EnsureFundingKey() (ethkey.Key, bool, error) {
 	ret := _m.Called()
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func() models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func() ethkey.Key); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 bool
@@ -128,15 +127,15 @@ func (_m *KeyStoreInterface) ExportKey(address common.Address, newPassword strin
 }
 
 // FundingKeys provides a mock function with given fields:
-func (_m *KeyStoreInterface) FundingKeys() ([]models.Key, error) {
+func (_m *KeyStoreInterface) FundingKeys() ([]ethkey.Key, error) {
 	ret := _m.Called()
 
-	var r0 []models.Key
-	if rf, ok := ret.Get(0).(func() []models.Key); ok {
+	var r0 []ethkey.Key
+	if rf, ok := ret.Get(0).(func() []ethkey.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Key)
+			r0 = ret.Get(0).([]ethkey.Key)
 		}
 	}
 
@@ -222,14 +221,14 @@ func (_m *KeyStoreInterface) HasSendingKeyWithAddress(address common.Address) (b
 }
 
 // ImportKey provides a mock function with given fields: keyJSON, oldPassword
-func (_m *KeyStoreInterface) ImportKey(keyJSON []byte, oldPassword string) (models.Key, error) {
+func (_m *KeyStoreInterface) ImportKey(keyJSON []byte, oldPassword string) (ethkey.Key, error) {
 	ret := _m.Called(keyJSON, oldPassword)
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func([]byte, string) models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func([]byte, string) ethkey.Key); ok {
 		r0 = rf(keyJSON, oldPassword)
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 error
@@ -243,14 +242,14 @@ func (_m *KeyStoreInterface) ImportKey(keyJSON []byte, oldPassword string) (mode
 }
 
 // ImportKeyFileToDB provides a mock function with given fields: keyPath
-func (_m *KeyStoreInterface) ImportKeyFileToDB(keyPath string) (models.Key, error) {
+func (_m *KeyStoreInterface) ImportKeyFileToDB(keyPath string) (ethkey.Key, error) {
 	ret := _m.Called(keyPath)
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func(string) models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func(string) ethkey.Key); ok {
 		r0 = rf(keyPath)
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 error
@@ -264,14 +263,14 @@ func (_m *KeyStoreInterface) ImportKeyFileToDB(keyPath string) (models.Key, erro
 }
 
 // KeyByAddress provides a mock function with given fields: address
-func (_m *KeyStoreInterface) KeyByAddress(address common.Address) (models.Key, error) {
+func (_m *KeyStoreInterface) KeyByAddress(address common.Address) (ethkey.Key, error) {
 	ret := _m.Called(address)
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func(common.Address) models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func(common.Address) ethkey.Key); ok {
 		r0 = rf(address)
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 error
@@ -285,14 +284,14 @@ func (_m *KeyStoreInterface) KeyByAddress(address common.Address) (models.Key, e
 }
 
 // RemoveKey provides a mock function with given fields: address, hardDelete
-func (_m *KeyStoreInterface) RemoveKey(address common.Address, hardDelete bool) (models.Key, error) {
+func (_m *KeyStoreInterface) RemoveKey(address common.Address, hardDelete bool) (ethkey.Key, error) {
 	ret := _m.Called(address, hardDelete)
 
-	var r0 models.Key
-	if rf, ok := ret.Get(0).(func(common.Address, bool) models.Key); ok {
+	var r0 ethkey.Key
+	if rf, ok := ret.Get(0).(func(common.Address, bool) ethkey.Key); ok {
 		r0 = rf(address, hardDelete)
 	} else {
-		r0 = ret.Get(0).(models.Key)
+		r0 = ret.Get(0).(ethkey.Key)
 	}
 
 	var r1 error
@@ -306,15 +305,15 @@ func (_m *KeyStoreInterface) RemoveKey(address common.Address, hardDelete bool) 
 }
 
 // SendingKeys provides a mock function with given fields:
-func (_m *KeyStoreInterface) SendingKeys() ([]models.Key, error) {
+func (_m *KeyStoreInterface) SendingKeys() ([]ethkey.Key, error) {
 	ret := _m.Called()
 
-	var r0 []models.Key
-	if rf, ok := ret.Get(0).(func() []models.Key); ok {
+	var r0 []ethkey.Key
+	if rf, ok := ret.Get(0).(func() []ethkey.Key); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Key)
+			r0 = ret.Get(0).([]ethkey.Key)
 		}
 	}
 

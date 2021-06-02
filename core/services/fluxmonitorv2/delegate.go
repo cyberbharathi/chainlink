@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink/core/services/eth"
 	"github.com/smartcontractkit/chainlink/core/services/job"
+	"github.com/smartcontractkit/chainlink/core/services/keystore"
 	"github.com/smartcontractkit/chainlink/core/services/log"
 	"github.com/smartcontractkit/chainlink/core/services/pipeline"
 	corestore "github.com/smartcontractkit/chainlink/core/store"
@@ -14,6 +15,7 @@ import (
 type Delegate struct {
 	db             *gorm.DB
 	store          *corestore.Store
+	ethKeyStore    *keystore.EthKeyStore
 	jobORM         job.ORM
 	pipelineORM    pipeline.ORM
 	pipelineRunner pipeline.Runner
@@ -25,6 +27,7 @@ type Delegate struct {
 // NewDelegate constructs a new delegate
 func NewDelegate(
 	store *corestore.Store,
+	ethKeyStore *keystore.EthKeyStore,
 	jobORM job.ORM,
 	pipelineORM pipeline.ORM,
 	pipelineRunner pipeline.Runner,
@@ -36,6 +39,7 @@ func NewDelegate(
 	return &Delegate{
 		db,
 		store,
+		ethKeyStore,
 		jobORM,
 		pipelineORM,
 		pipelineRunner,
@@ -62,7 +66,7 @@ func (d *Delegate) ServicesForSpec(spec job.Job) (services []job.Service, err er
 		NewORM(d.store.DB),
 		d.jobORM,
 		d.pipelineORM,
-		NewKeyStore(d.store.KeyStore),
+		NewKeyStore(d.ethKeyStore),
 		d.ethClient,
 		d.logBroadcaster,
 		d.pipelineRunner,

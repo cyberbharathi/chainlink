@@ -133,11 +133,11 @@ type ChainlinkApplication struct {
 // present at the configured root directory (default: ~/.chainlink),
 // the logger at the same directory and returns the Application to
 // be used by the node.
-func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker postgres.AdvisoryLocker, keyStoreGenerator strpkg.KeyStoreGenerator, externalInitiatorManager ExternalInitiatorManager, onConnectCallbacks ...func(Application)) (Application, error) {
+func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker postgres.AdvisoryLocker, externalInitiatorManager ExternalInitiatorManager, onConnectCallbacks ...func(Application)) (Application, error) {
 	var subservices []service.Service
 
 	shutdownSignal := gracefulpanic.NewSignal()
-	store, err := strpkg.NewStore(config, ethClient, advisoryLocker, shutdownSignal, keyStoreGenerator)
+	store, err := strpkg.NewStore(config, ethClient, advisoryLocker, shutdownSignal)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +145,10 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 	setupConfig(config, store)
 
 	headBroadcaster := headtracker.NewHeadBroadcaster()
-
 	healthChecker := health.NewChecker()
+
+	scryptParams := utils.GetScryptParams(config)
+	keyStore := keystore.NewKeyStore(store.DB, scryptParams)
 
 	explorerClient := synchronization.ExplorerClient(&synchronization.NoopExplorerClient{})
 	statsPusher := synchronization.StatsPusher(&synchronization.NoopStatsPusher{})
@@ -196,7 +198,7 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 	var runManager services.RunManager
 	var jobSubscriber services.JobSubscriber
 	if config.EnableLegacyJobPipeline() {
-		runExecutor = services.NewRunExecutor(store, statsPusher)
+		runExecutor = services.NewRunExecutor(store, keyStore, statsPusher)
 		runQueue = services.NewRunQueue(runExecutor)
 		runManager = services.NewRunManager(runQueue, config, store.ORM, statsPusher, store.Clock)
 		jobSubscriber = services.NewJobSubscriber(store, runManager)
@@ -215,9 +217,9 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 
 	logBroadcaster := log.NewBroadcaster(log.NewORM(store.DB), ethClient, store.Config, highestSeenHead)
 	eventBroadcaster := postgres.NewEventBroadcaster(config.DatabaseURL(), config.DatabaseListenerMinReconnectInterval(), config.DatabaseListenerMaxReconnectDuration())
-	fluxMonitor := fluxmonitor.New(store, runManager, logBroadcaster)
+	fluxMonitor := fluxmonitor.New(store, keyStore.Eth, runManager, logBroadcaster)
 
-	bptxm := bulletprooftxmanager.NewBulletproofTxManager(store.DB, ethClient, store.Config, store.KeyStore, advisoryLocker, eventBroadcaster)
+	bptxm := bulletprooftxmanager.NewBulletproofTxManager(store.DB, ethClient, store.Config, keyStore.Eth, advisoryLocker, eventBroadcaster)
 
 	promReporter := services.NewPromReporter(store.MustSQLDB())
 
@@ -230,7 +232,7 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 
 	var balanceMonitor services.BalanceMonitor
 	if config.BalanceMonitorEnabled() {
-		balanceMonitor = services.NewBalanceMonitor(store)
+		balanceMonitor = services.NewBalanceMonitor(store, keyStore.Eth)
 	} else {
 		balanceMonitor = &services.NullBalanceMonitor{}
 	}
@@ -263,6 +265,7 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 	if config.Dev() || config.FeatureFluxMonitorV2() {
 		delegates[job.FluxMonitor] = fluxmonitorv2.NewDelegate(
 			store,
+			keyStore.Eth,
 			jobORM,
 			pipelineORM,
 			pipelineRunner,
@@ -278,9 +281,6 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 			},
 		)
 	}
-
-	scryptParams := utils.GetScryptParams(config)
-	keyStore := keystore.NewKeyStore(store.DB, scryptParams)
 
 	if (config.Dev() && config.P2PListenPort() > 0) || config.FeatureOffchainReporting() {
 		logger.Debug("Off-chain reporting enabled")
@@ -559,10 +559,6 @@ func (app *ChainlinkApplication) stop() error {
 func (app *ChainlinkApplication) GetStore() *strpkg.Store {
 	return app.Store
 }
-
-// func (app *ChainlinkApplication) GetOCRKeyStore() *offchainreporting.KeyStore {
-// 	return app.GetKeyStore().OCR
-// }
 
 func (app *ChainlinkApplication) GetKeyStore() *keystore.KeyStore {
 	return app.KeyStore

@@ -3,6 +3,7 @@ package presenters
 import (
 	"time"
 
+	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
 	"github.com/smartcontractkit/chainlink/core/services/keystore/p2pkey"
 	"github.com/smartcontractkit/chainlink/core/services/signatures/secp256k1"
 
@@ -33,7 +34,7 @@ const (
 
 // DirectRequestSpec defines the spec details of a DirectRequest Job
 type DirectRequestSpec struct {
-	ContractAddress          models.EIP55Address `json:"contractAddress"`
+	ContractAddress          ethkey.EIP55Address `json:"contractAddress"`
 	OnChainJobSpecID         string              `json:"onChainJobSpecID"`
 	MinIncomingConfirmations clnull.Uint32       `json:"minIncomingConfirmations"`
 	Initiator                string              `json:"initiator"`
@@ -58,7 +59,7 @@ func NewDirectRequestSpec(spec *job.DirectRequestSpec) *DirectRequestSpec {
 
 // FluxMonitorSpec defines the spec details of a FluxMonitor Job
 type FluxMonitorSpec struct {
-	ContractAddress   models.EIP55Address `json:"contractAddress"`
+	ContractAddress   ethkey.EIP55Address `json:"contractAddress"`
 	Precision         int32               `json:"precision"`
 	Threshold         float32             `json:"threshold"`
 	AbsoluteThreshold float32             `json:"absoluteThreshold"`
@@ -91,12 +92,12 @@ func NewFluxMonitorSpec(spec *job.FluxMonitorSpec) *FluxMonitorSpec {
 
 // OffChainReportingSpec defines the spec details of a OffChainReporting Job
 type OffChainReportingSpec struct {
-	ContractAddress                        models.EIP55Address  `json:"contractAddress"`
+	ContractAddress                        ethkey.EIP55Address  `json:"contractAddress"`
 	P2PPeerID                              *p2pkey.PeerID       `json:"p2pPeerID"`
 	P2PBootstrapPeers                      pq.StringArray       `json:"p2pBootstrapPeers"`
 	IsBootstrapPeer                        bool                 `json:"isBootstrapPeer"`
 	EncryptedOCRKeyBundleID                *models.Sha256Hash   `json:"keyBundleID"`
-	TransmitterAddress                     *models.EIP55Address `json:"transmitterAddress"`
+	TransmitterAddress                     *ethkey.EIP55Address `json:"transmitterAddress"`
 	ObservationTimeout                     models.Interval      `json:"observationTimeout"`
 	BlockchainTimeout                      models.Interval      `json:"blockchainTimeout"`
 	ContractConfigTrackerSubscribeInterval models.Interval      `json:"contractConfigTrackerSubscribeInterval"`
@@ -142,8 +143,8 @@ func NewPipelineSpec(spec *pipeline.Spec) PipelineSpec {
 
 // KeeperSpec defines the spec details of a Keeper Job
 type KeeperSpec struct {
-	ContractAddress models.EIP55Address `json:"contractAddress"`
-	FromAddress     models.EIP55Address `json:"fromAddress"`
+	ContractAddress ethkey.EIP55Address `json:"contractAddress"`
+	FromAddress     ethkey.EIP55Address `json:"fromAddress"`
 	CreatedAt       time.Time           `json:"createdAt"`
 	UpdatedAt       time.Time           `json:"updatedAt"`
 }
@@ -191,7 +192,7 @@ func NewCronSpec(spec *job.CronSpec) *CronSpec {
 }
 
 type VRFSpec struct {
-	CoordinatorAddress models.EIP55Address `toml:"coordinatorAddress"`
+	CoordinatorAddress ethkey.EIP55Address `toml:"coordinatorAddress"`
 	PublicKey          secp256k1.PublicKey `toml:"publicKey"`
 	Confirmations      uint32              `toml:"confirmations"`
 	CreatedAt          time.Time           `json:"createdAt"`

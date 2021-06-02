@@ -5,12 +5,12 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/smartcontractkit/chainlink/core/services/job"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
 	"github.com/smartcontractkit/chainlink/core/services/pipeline"
-	"github.com/smartcontractkit/chainlink/core/store/models"
 )
 
 type DirectRequestToml struct {
-	ContractAddress  models.EIP55Address `toml:"contractAddress"`
+	ContractAddress  ethkey.EIP55Address `toml:"contractAddress"`
 	OnChainJobSpecID uuid.UUID           `toml:"jobID"`
 }
 

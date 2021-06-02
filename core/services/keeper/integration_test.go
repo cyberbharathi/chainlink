@@ -16,8 +16,8 @@ import (
 	"github.com/smartcontractkit/chainlink/core/internal/gethwrappers/generated/keeper_registry_wrapper"
 	"github.com/smartcontractkit/chainlink/core/internal/gethwrappers/generated/mock_v3_aggregator_contract"
 	"github.com/smartcontractkit/chainlink/core/services/keeper"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
 	"github.com/smartcontractkit/chainlink/core/store/dialects"
-	"github.com/smartcontractkit/chainlink/core/store/models"
 	"github.com/smartcontractkit/libocr/gethwrappers/link_token_interface"
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +38,7 @@ func TestKeeperEthIntegration(t *testing.T) {
 	// setup node key
 	nodeKey := cltest.MustGenerateRandomKey(t)
 	nodeAddress := nodeKey.Address.Address()
-	nodeAddressEIP55 := models.EIP55AddressFromAddress(nodeAddress)
+	nodeAddressEIP55 := ethkey.EIP55AddressFromAddress(nodeAddress)
 
 	// setup blockchain
 	sergey := cltest.NewSimulatedBackendIdentity(t) // owns all the link
@@ -100,7 +100,7 @@ func TestKeeperEthIntegration(t *testing.T) {
 	require.NoError(t, app.StartAndConnect())
 
 	// create job
-	regAddrEIP55 := models.EIP55AddressFromAddress(regAddr)
+	regAddrEIP55 := ethkey.EIP55AddressFromAddress(regAddr)
 	cltest.MustInsertKeeperJob(t, app.Store, nodeAddressEIP55, regAddrEIP55)
 
 	// keeper job is triggered and payload is received

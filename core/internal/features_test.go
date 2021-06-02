@@ -693,7 +693,7 @@ func TestIntegration_SyncJobRuns(t *testing.T) {
 		ethClient,
 	)
 	defer cleanup()
-	cltest.MustAddRandomKeyToKeystore(t, app.Store)
+	cltest.MustAddRandomKeyToKeystore(t, app.GetKeyStore().Eth)
 
 	app.InstantClock()
 	require.NoError(t, app.Start())
@@ -971,7 +971,7 @@ func TestIntegration_FluxMonitor_Deviation(t *testing.T) {
 	)
 	defer appCleanup()
 
-	_, address := cltest.MustAddRandomKeyToKeystore(t, app.Store)
+	_, address := cltest.MustAddRandomKeyToKeystore(t, app.GetKeyStore().Eth)
 
 	// Start, connect, and initialize node
 	sub.On("Err").Return(nil).Maybe()
@@ -1370,7 +1370,7 @@ func TestIntegration_MultiwordV1_Sim(t *testing.T) {
 	app.Config.Set("ETH_HEAD_TRACKER_MAX_BUFFER_SIZE", 100)
 	app.Config.Set("MIN_OUTGOING_CONFIRMATIONS", 1)
 
-	sendingKeys, err := app.Store.KeyStore.SendingKeys()
+	sendingKeys, err := app.KeyStore.Eth.SendingKeys()
 	require.NoError(t, err)
 	authorizedSenders := []common.Address{sendingKeys[0].Address.Address()}
 	_, err = operatorContract.SetAuthorizedSenders(user, authorizedSenders)
@@ -1504,7 +1504,7 @@ func setupNode(t *testing.T, owner *bind.TransactOpts, port int, dbName string, 
 	app.Config.Set("MIN_OUTGOING_CONFIRMATIONS", 1)
 	app.Config.Set("CHAINLINK_DEV", true) // Disables ocr spec validation so we can have fast polling for the test.
 
-	sendingKeys, err := app.Store.KeyStore.SendingKeys()
+	sendingKeys, err := app.KeyStore.Eth.SendingKeys()
 	require.NoError(t, err)
 	transmitter := sendingKeys[0].Address.Address()
 
@@ -1918,7 +1918,7 @@ func TestIntegration_GasUpdater(t *testing.T) {
 }
 
 func triggerAllKeys(t *testing.T, app *cltest.TestApplication) {
-	keys, err := app.Store.KeyStore.SendingKeys()
+	keys, err := app.KeyStore.Eth.SendingKeys()
 	require.NoError(t, err)
 	for _, k := range keys {
 		app.BPTXM.Trigger(k.Address.Address())
