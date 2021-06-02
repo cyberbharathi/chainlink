@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"context"
-	"strings"
+	"encoding/json"
+	"fmt"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/pkg/errors"
@@ -22,7 +24,7 @@ func (t *ETHABIEncodeTask) Type() TaskType {
 }
 
 func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable, inputs []Result) (result Result) {
-	_, err := CheckInputs(inputs, 0, 1, 0)
+	_, err := CheckInputs(inputs, -1, -1, 0)
 	if err != nil {
 		return Result{Error: err}
 	}
@@ -32,51 +34,93 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		theABI      StringParam
 	)
 	err = multierr.Combine(
-		errors.Wrap(ResolveParam(&inputValues, From(VarExpr(t.Data, vars), JSONWithVarExprs(t.Data, vars, false), Inputs(inputs))), "data"),
+		errors.Wrap(ResolveParam(&inputValues, From(VarExpr(t.Data, vars), JSONWithVarExprs(t.Data, vars, false), nil)), "data"),
 		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
 		return Result{Error: err}
 	}
 
-	parts := strings.Split(string(theABI), ",")
-	var args abi.Arguments
+	methodName, args, _, err := parseABIString(string(theABI), false)
+	if err != nil {
+		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
+	}
+	method := abi.NewMethod(methodName, methodName, abi.Function, "", false, false, args, nil)
+
 	var vals []interface{}
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		typeAndMaybeName := strings.Split(part, " ")
-		for i := range typeAndMaybeName {
-			typeAndMaybeName[i] = strings.TrimSpace(typeAndMaybeName[i])
-		}
-		var typeStr, name string
-		switch len(typeAndMaybeName) {
-		case 0:
-			return Result{Error: errors.New("bad ABI specification, empty argument")}
-		case 1:
-			typeStr = typeAndMaybeName[0]
-		case 2:
-			typeStr = typeAndMaybeName[0]
-			name = typeAndMaybeName[1]
-		default:
-			return Result{Error: errors.New("bad ABI specification, too many components in argument")}
-		}
-		typ, err := abi.NewType(typeStr, "", nil)
-		if err != nil {
-			return Result{Error: err}
-		}
-
-		args = append(args, abi.Argument{Type: typ, Name: name})
-
-		val, exists := inputValues[name]
+	for _, arg := range args {
+		val, exists := inputValues[arg.Name]
 		if !exists {
-			return Result{Error: errors.Errorf("ETHABIEncode: argument '%v' is missing", name)}
+			return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: argument '%v' is missing", name)}
+		}
+		val, err = convertToABIType(val, typ)
+		if err != nil {
+			return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: %v", err)}
 		}
 		vals = append(vals, val)
 	}
 
-	dataBytes, err := args.Pack(vals...)
+	argsEncoded, err := method.Inputs.Pack(vals...)
 	if err != nil {
-		return Result{Error: err}
+		return Result{Error: errors.Wrapf(ErrBadInput, "ETHABIEncode: could not ABI encode values: %v", err)}
 	}
+	dataBytes := append(method.ID, argsEncoded...)
 	return Result{Value: dataBytes}
+}
+
+func convertToABIType(val interface{}, abiType abi.Type) (interface{}, error) {
+	err := checkArrayLengths(reflect.ValueOf(val), abiType)
+	if err != nil {
+		return nil, err
+	}
+
+	bs, err := json.Marshal(val)
+	if err != nil {
+		return nil, err
+	}
+
+	goType := abiType.GetType()
+	converted := reflect.New(goType).Interface()
+	err = json.Unmarshal(bs, converted)
+	return converted, err
+}
+
+// JSON marshaling will not fail when a longer array is unmarshaled into a shorter
+// one, so we manually check for this case and error if values would otherwise
+// be truncated.
+func checkArrayLengths(rval reflect.Value, abiType abi.Type) error {
+	if rval.Kind() == reflect.Interface {
+		rval = rval.Elem()
+	}
+
+	switch abiType.T {
+	case abi.SliceTy:
+		switch rval.Kind() {
+		case reflect.Slice, reflect.Array:
+			for i := 0; i < rval.Len(); i++ {
+				err := checkArrayLengths(rval.Index(i), *abiType.Elem)
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			panic(fmt.Sprintf("invariant violation: abi specifies slice, got %T", rval.Interface()))
+		}
+	case abi.ArrayTy:
+		switch rval.Kind() {
+		case reflect.Slice, reflect.Array:
+			if abiType.Size != rval.Len() {
+				return errors.Wrapf(ErrBadInput, "ETHABIEncode: input array length does not match ABI type")
+			}
+			for i := 0; i < rval.Len(); i++ {
+				err := checkArrayLengths(rval.Index(i), *abiType.Elem)
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			panic(fmt.Sprintf("invariant violation: abi specifies array, got %T (%v)", rval.Interface(), rval.Kind()))
+		}
+	}
+	return nil
 }

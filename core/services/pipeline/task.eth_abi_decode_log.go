@@ -2,10 +2,8 @@ package pipeline
 
 import (
 	"context"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
@@ -13,7 +11,8 @@ import (
 type ETHABIDecodeLogTask struct {
 	BaseTask `mapstructure:",squash"`
 	ABI      string `json:"abi"`
-	Log      string `json:"log"`
+	Data     string `json:"data"`
+	Topics   string `json:"topics"`
 }
 
 var _ Task = (*ETHABIDecodeLogTask)(nil)
@@ -23,72 +22,28 @@ func (t *ETHABIDecodeLogTask) Type() TaskType {
 }
 
 func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializable, inputs []Result) (result Result) {
-	_, err := CheckInputs(inputs, 0, 1, 0)
+	_, err := CheckInputs(inputs, -1, -1, 0)
 	if err != nil {
 		return Result{Error: err}
 	}
 
 	var (
-		log    MapParam
 		theABI StringParam
+		data   BytesParam
+		topics HashSliceParam
 	)
 	err = multierr.Combine(
-		errors.Wrap(ResolveParam(&log, From(VarExpr(t.Log, vars), Input(inputs, 0))), "log"),
+		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data, vars))), "data"),
+		errors.Wrap(ResolveParam(&topics, From(VarExpr(t.Topics, vars))), "topics"),
 		errors.Wrap(ResolveParam(&theABI, From(NonemptyString(t.ABI))), "abi"),
 	)
 	if err != nil {
 		return Result{Error: err}
 	}
 
-	parts := strings.Split(string(theABI), ",")
-	var args, indexedArgs abi.Arguments
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		argStr := strings.Split(part, " ")
-		for i := range argStr {
-			argStr[i] = strings.TrimSpace(argStr[i])
-		}
-
-		var typeStr, name string
-		var indexed bool
-		switch len(argStr) {
-		case 0, 1:
-			return Result{Error: errors.New("bad ABI specification, too few components in argument")}
-		case 2:
-			if argStr[1] == "indexed" {
-				return Result{Error: errors.New("bad ABI specification, too few components in argument")}
-			}
-			typeStr = argStr[0]
-			name = argStr[1]
-		case 3:
-			if argStr[1] != "indexed" {
-				return Result{Error: errors.New("bad ABI specification, unknown component in argument")}
-			}
-			typeStr = argStr[0]
-			name = argStr[2]
-			indexed = true
-		default:
-			return Result{Error: errors.New("bad ABI specification, too many components in argument")}
-		}
-		typ, err := abi.NewType(typeStr, "", nil)
-		if err != nil {
-			return Result{Error: err}
-		}
-
-		args = append(args, abi.Argument{Type: typ, Name: name, Indexed: indexed})
-		if indexed {
-			indexedArgs = append(indexedArgs, abi.Argument{Type: typ, Name: name, Indexed: indexed})
-		}
-	}
-
-	data, ok := log["data"].([]byte)
-	if !ok {
-		return Result{Error: errors.New("log data: expected []byte")}
-	}
-
-	topics, ok := log["topics"].([]common.Hash)
-	if !ok {
-		return Result{Error: errors.New("log topics: expected []common.Hash")}
+	eventName, args, indexedArgs, err := parseABIString(string(theABI), true)
+	if err != nil {
+		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
 	}
 
 	out := make(map[string]interface{})

@@ -234,6 +234,7 @@ const (
 	TaskTypeMedian          TaskType = "median"
 	TaskTypeMultiply        TaskType = "multiply"
 	TaskTypeJSONParse       TaskType = "jsonparse"
+	TaskTypeCBORParse       TaskType = "cborparse"
 	TaskTypeAny             TaskType = "any"
 	TaskTypeVRF             TaskType = "vrf"
 	TaskTypeETHABIEncode    TaskType = "ethabiencode"
