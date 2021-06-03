@@ -250,7 +250,7 @@ func (ks *Eth) ImportKey(keyJSON []byte, oldPassword string) (key ethkey.Key, er
 	}
 	dKey, err := keystore.DecryptKey(keyJSON, oldPassword)
 	if err != nil {
-		return key, errors.Wrap(err, "Eth#ImportKey failed to decrypt key")
+		return key, errors.Wrap(err, "EthKeyStore#ImportKey failed to decrypt key")
 	}
 	exportedJSON, err := ks.encryptKey(dKey, ks.password)
 	if err != nil {
