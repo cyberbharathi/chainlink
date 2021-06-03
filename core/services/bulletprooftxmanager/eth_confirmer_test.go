@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink/core/internal/mocks"
 	"github.com/smartcontractkit/chainlink/core/services/bulletprooftxmanager"
 	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
+	ksmocks "github.com/smartcontractkit/chainlink/core/services/keystore/mocks"
 	"github.com/smartcontractkit/chainlink/core/services/postgres"
 	"github.com/smartcontractkit/chainlink/core/store"
 	"github.com/smartcontractkit/chainlink/core/store/models"
@@ -1243,7 +1244,7 @@ func TestEthConfirmer_RebroadcastWhereNecessary(t *testing.T) {
 	fromAddress := key.Address.Address()
 	keys := []ethkey.Key{key, otherKey}
 
-	kst := new(mocks.KeyStoreInterface)
+	kst := new(ksmocks.EthInterface)
 	// Use a mock keystore for this test
 	ec := bulletprooftxmanager.NewEthConfirmer(store.DB, ethClient, config, kst, &postgres.NullAdvisoryLocker{}, keys)
 	currentHead := int64(30)

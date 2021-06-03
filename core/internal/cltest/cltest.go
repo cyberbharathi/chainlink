@@ -432,7 +432,6 @@ func NewApplicationWithConfig(t testing.TB, tc *TestConfig, flagsAndDeps ...inte
 	var ethClient eth.Client = &eth.NullClient{}
 	var advisoryLocker postgres.AdvisoryLocker = &postgres.NullAdvisoryLocker{}
 	var externalInitiatorManager chainlink.ExternalInitiatorManager = &services.NullExternalInitiatorManager{}
-	// var ks keystore.KeyStoreInterface
 
 	for _, flag := range flagsAndDeps {
 		switch dep := flag.(type) {
@@ -442,23 +441,10 @@ func NewApplicationWithConfig(t testing.TB, tc *TestConfig, flagsAndDeps ...inte
 			advisoryLocker = dep
 		case chainlink.ExternalInitiatorManager:
 			externalInitiatorManager = dep
-			// case keystore.KeyStoreInterface: // TODO - RYAN - this will probably break some tests!
-			// 	ks = dep
 		}
 	}
 
 	ta := &TestApplication{t: t, connectedChannel: make(chan struct{}, 1)}
-
-	// var keyStoreGenerator strpkg.KeyStoreGenerator
-	// if ks == nil {
-	// 	keyStoreGenerator = strpkg.InsecureKeyStoreGen
-	// } else {
-	// 	keyStoreGenerator = func(*gorm.DB, *orm.Config) strpkg.KeyStoreInterface {
-	// 		return ks
-	// 	}
-	// }
-
-	// appInstance, err := chainlink.NewApplication(tc.Config, ethClient, advisoryLocker, keyStoreGenerator, externalInitiatorManager, func(app chainlink.Application) {
 	appInstance, err := chainlink.NewApplication(tc.Config, ethClient, advisoryLocker, externalInitiatorManager, func(app chainlink.Application) {
 		ta.connectedChannel <- struct{}{}
 	})

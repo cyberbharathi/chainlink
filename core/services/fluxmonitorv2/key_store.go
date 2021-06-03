@@ -16,10 +16,10 @@ type KeyStoreInterface interface {
 
 // KeyStore implements KeyStoreInterface
 type KeyStore struct {
-	keystore.KeyStoreInterface
+	keystore.EthInterface
 }
 
 // NewKeyStore initializes a new keystore
-func NewKeyStore(ks keystore.KeyStoreInterface) *KeyStore {
+func NewKeyStore(ks keystore.EthInterface) *KeyStore {
 	return &KeyStore{ks}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/chainlink/core/services/bulletprooftxmanager"
 	bptxmmocks "github.com/smartcontractkit/chainlink/core/services/bulletprooftxmanager/mocks"
 	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
+	ksmocks "github.com/smartcontractkit/chainlink/core/services/keystore/mocks"
 	"github.com/smartcontractkit/chainlink/core/services/postgres"
 	pgmocks "github.com/smartcontractkit/chainlink/core/services/postgres/mocks"
 	"github.com/smartcontractkit/chainlink/core/store/models"
@@ -359,7 +360,7 @@ func TestBulletproofTxManager_Lifecycle(t *testing.T) {
 	db := store.DB
 	ethClient := new(mocks.Client)
 	config := new(bptxmmocks.Config)
-	kst := new(mocks.KeyStoreInterface)
+	kst := new(ksmocks.EthInterface)
 	advisoryLocker := &postgres.NullAdvisoryLocker{}
 	eventBroadcaster := new(pgmocks.EventBroadcaster)
 

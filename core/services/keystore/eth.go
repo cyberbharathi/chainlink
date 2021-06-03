@@ -28,9 +28,9 @@ import (
 // ErrKeyStoreLocked is returned if you call a method that requires unlocked keys before you unlocked the keystore
 var ErrKeyStoreLocked = errors.New("keystore is locked (HINT: did you forget to call keystore.Unlock?)")
 
-// KeyStoreInterface is the external interface for EthKeyStore
-//go:generate mockery --name KeyStoreInterface --output ../internal/mocks/ --case=underscore
-type KeyStoreInterface interface { // TODO - RYAN - rename EthKeyStoreInterface
+// EthInterface is the external interface for EthKeyStore
+//go:generate mockery --name EthInterface --output mocks/ --case=underscore
+type EthInterface interface { // TODO - RYAN - rename EthKeyStoreInterface
 	Unlock(password string) error
 
 	// Requires Unlock
@@ -56,7 +56,7 @@ type KeyStoreInterface interface { // TODO - RYAN - rename EthKeyStoreInterface
 	ImportKeyFileToDB(keyPath string) (ethkey.Key, error)
 }
 
-var _ KeyStoreInterface = &Eth{}
+var _ EthInterface = &Eth{}
 
 type combinedKey struct {
 	DBKey        ethkey.Key
