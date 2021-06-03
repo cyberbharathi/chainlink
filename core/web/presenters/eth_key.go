@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink/core/assets"
-	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/ethkey"
 )
 
 // ETHKeyResource represents a ETH key JSONAPI resource. It holds the hex

@@ -8,7 +8,7 @@ import (
 	"github.com/smartcontractkit/chainlink/core/assets"
 	"github.com/smartcontractkit/chainlink/core/internal/cltest"
 	"github.com/smartcontractkit/chainlink/core/internal/mocks"
-	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/ethkey"
 	webpresenters "github.com/smartcontractkit/chainlink/core/web/presenters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

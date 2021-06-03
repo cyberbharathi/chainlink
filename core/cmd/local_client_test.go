@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink/core/services/keystore"
-	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/ethkey"
 	"github.com/smartcontractkit/chainlink/core/store/dialects"
 
 	"github.com/smartcontractkit/chainlink/core/cmd"

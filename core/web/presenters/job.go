@@ -3,8 +3,8 @@ package presenters
 import (
 	"time"
 
-	"github.com/smartcontractkit/chainlink/core/services/keystore/ethkey"
-	"github.com/smartcontractkit/chainlink/core/services/keystore/p2pkey"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/ethkey"
+	"github.com/smartcontractkit/chainlink/core/services/keystore/keys/p2pkey"
 	"github.com/smartcontractkit/chainlink/core/services/signatures/secp256k1"
 
 	"github.com/lib/pq"
