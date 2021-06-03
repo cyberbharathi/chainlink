@@ -17,9 +17,9 @@ import (
 // KeyStoreAuthenticator implements the Authenticate method for the store and
 // a password string.
 type KeyStoreAuthenticator interface {
-	AuthenticateEthKey(*keystore.EthKeyStore, string) (string, error)
+	AuthenticateEthKey(*keystore.Eth, string) (string, error)
 	AuthenticateVRFKey(*store.Store, string) error
-	AuthenticateOCRKey(*keystore.OCRKeyStore, *orm.Config, string) error
+	AuthenticateOCRKey(*keystore.OCR, *orm.Config, string) error
 }
 
 // TerminalKeyStoreAuthenticator contains fields for prompting the user and an
@@ -32,7 +32,7 @@ type TerminalKeyStoreAuthenticator struct {
 // the KeyStore, and if there are none, a new account will be created
 // by prompting for a password. If there are accounts present, all accounts
 // will be unlocked.
-func (auth TerminalKeyStoreAuthenticator) AuthenticateEthKey(ethKeyStore *keystore.EthKeyStore, password string) (string, error) {
+func (auth TerminalKeyStoreAuthenticator) AuthenticateEthKey(ethKeyStore *keystore.Eth, password string) (string, error) {
 	passwordProvided := len(password) != 0
 	interactive := auth.Prompter.IsTerminal()
 	hasSendingKeys, err := ethKeyStore.HasDBSendingKeys()
@@ -53,7 +53,7 @@ func (auth TerminalKeyStoreAuthenticator) AuthenticateEthKey(ethKeyStore *keysto
 	}
 }
 
-func (auth TerminalKeyStoreAuthenticator) validatePasswordStrength(ethKeyStore *keystore.EthKeyStore, password string) error {
+func (auth TerminalKeyStoreAuthenticator) validatePasswordStrength(ethKeyStore *keystore.Eth, password string) error {
 	// Password policy:
 	//
 	// Must be longer than 12 characters
@@ -110,7 +110,7 @@ func (auth TerminalKeyStoreAuthenticator) validatePasswordStrength(ethKeyStore *
 	return merr
 }
 
-func (auth TerminalKeyStoreAuthenticator) promptExistingPassword(ethKeyStore *keystore.EthKeyStore) (string, error) {
+func (auth TerminalKeyStoreAuthenticator) promptExistingPassword(ethKeyStore *keystore.Eth) (string, error) {
 	for {
 		password := auth.Prompter.PasswordPrompt("Enter key store password:")
 		if ethKeyStore.Unlock(password) == nil {
@@ -119,7 +119,7 @@ func (auth TerminalKeyStoreAuthenticator) promptExistingPassword(ethKeyStore *ke
 	}
 }
 
-func (auth TerminalKeyStoreAuthenticator) promptNewPassword(ethKeyStore *keystore.EthKeyStore) (string, error) {
+func (auth TerminalKeyStoreAuthenticator) promptNewPassword(ethKeyStore *keystore.Eth) (string, error) {
 	for {
 		password := auth.Prompter.PasswordPrompt("New key store password: ")
 		err := auth.validatePasswordStrength(ethKeyStore, password)
@@ -143,7 +143,7 @@ func (auth TerminalKeyStoreAuthenticator) promptNewPassword(ethKeyStore *keystor
 	}
 }
 
-func (auth TerminalKeyStoreAuthenticator) unlockNewWithPassword(ethKeyStore *keystore.EthKeyStore, password string) (string, error) {
+func (auth TerminalKeyStoreAuthenticator) unlockNewWithPassword(ethKeyStore *keystore.Eth, password string) (string, error) {
 	err := auth.validatePasswordStrength(ethKeyStore, password)
 	if err != nil {
 		return password, err
@@ -157,7 +157,7 @@ func (auth TerminalKeyStoreAuthenticator) unlockNewWithPassword(ethKeyStore *key
 	return password, errors.Wrap(err, "failed to create new ETH key")
 }
 
-func (auth TerminalKeyStoreAuthenticator) unlockExistingWithPassword(ethKeyStore *keystore.EthKeyStore, password string) (string, error) {
+func (auth TerminalKeyStoreAuthenticator) unlockExistingWithPassword(ethKeyStore *keystore.Eth, password string) (string, error) {
 	err := ethKeyStore.Unlock(password)
 	return password, err
 }
@@ -185,7 +185,7 @@ func (auth TerminalKeyStoreAuthenticator) AuthenticateVRFKey(store *store.Store,
 }
 
 // AuthenticateOCRKey authenticates OCR keypairs
-func (auth TerminalKeyStoreAuthenticator) AuthenticateOCRKey(ocrKeyStore *keystore.OCRKeyStore, config *orm.Config, password string) error {
+func (auth TerminalKeyStoreAuthenticator) AuthenticateOCRKey(ocrKeyStore *keystore.OCR, config *orm.Config, password string) error {
 	err := ocrKeyStore.Unlock(password)
 	if err != nil {
 		return errors.Wrapf(err,

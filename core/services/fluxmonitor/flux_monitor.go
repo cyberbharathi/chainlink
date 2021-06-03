@@ -87,7 +87,7 @@ type addEntry struct {
 // one per initiator of type InitiatorFluxMonitor for added jobs.
 func New(
 	store *store.Store,
-	ethKeyStore *keystore.EthKeyStore,
+	ethKeyStore *keystore.Eth,
 	runManager RunManager,
 	logBroadcaster log.Broadcaster,
 ) Service {
@@ -286,7 +286,7 @@ type DeviationCheckerFactory interface {
 
 type pollingDeviationCheckerFactory struct {
 	store          *store.Store
-	ethKeyStore    *keystore.EthKeyStore
+	ethKeyStore    *keystore.Eth
 	logBroadcaster log.Broadcaster
 }
 
@@ -418,7 +418,7 @@ type DeviationChecker interface {
 // PollingDeviationChecker polls external price adapters via HTTP to check for price swings.
 type PollingDeviationChecker struct {
 	store          *store.Store
-	ethKeyStore    *keystore.EthKeyStore
+	ethKeyStore    *keystore.Eth
 	fluxAggregator flux_aggregator_wrapper.FluxAggregatorInterface
 	flags          flags_wrapper.FlagsInterface
 	runManager     RunManager
@@ -448,7 +448,7 @@ type PollingDeviationChecker struct {
 // NewPollingDeviationChecker returns a new instance of PollingDeviationChecker.
 func NewPollingDeviationChecker(
 	store *store.Store,
-	ethKeyStore *keystore.EthKeyStore,
+	ethKeyStore *keystore.Eth,
 	fluxAggregator flux_aggregator_wrapper.FluxAggregatorInterface,
 	flags flags_wrapper.FlagsInterface,
 	logBroadcaster log.Broadcaster,

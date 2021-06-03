@@ -23,7 +23,7 @@ import (
 
 // ValidateJob checks the job and its associated Initiators and Tasks for any
 // application logic errors.
-func ValidateJob(j models.JobSpec, store *store.Store, keyStore *keystore.KeyStore) error {
+func ValidateJob(j models.JobSpec, store *store.Store, keyStore *keystore.Master) error {
 	fe := models.NewJSONAPIErrors()
 	if j.StartAt.Valid && j.EndAt.Valid && j.StartAt.Time.After(j.EndAt.Time) {
 		fe.Add("StartAt cannot be before EndAt")
@@ -300,7 +300,7 @@ func validateRandomnessLogInitiator(i models.Initiator, j models.JobSpec) error 
 	return fe.CoerceEmptyToNil()
 }
 
-func validateTask(task models.TaskSpec, store *store.Store, keyStore *keystore.KeyStore) error {
+func validateTask(task models.TaskSpec, store *store.Store, keyStore *keystore.Master) error {
 	adapter, err := adapters.For(task, store.Config, store.ORM)
 	if err != nil {
 		return err
@@ -319,7 +319,7 @@ func validateTask(task models.TaskSpec, store *store.Store, keyStore *keystore.K
 	return nil
 }
 
-func validateTaskTypeEthTx(task models.TaskSpec, store *store.Store, keyStore *keystore.KeyStore) error {
+func validateTaskTypeEthTx(task models.TaskSpec, store *store.Store, keyStore *keystore.Master) error {
 	if task.Params.Get("fromAddress").Exists() {
 		fromAddress := task.Params.Get("fromAddress").String()
 		if !common.IsHexAddress(fromAddress) {
@@ -347,7 +347,7 @@ func validateTaskTypeRandom(task models.TaskSpec) error {
 }
 
 // ValidateServiceAgreement checks the ServiceAgreement for any application logic errors.
-func ValidateServiceAgreement(sa models.ServiceAgreement, store *store.Store, keyStore *keystore.KeyStore) error {
+func ValidateServiceAgreement(sa models.ServiceAgreement, store *store.Store, keyStore *keystore.Master) error {
 	fe := models.NewJSONAPIErrors()
 	config := store.Config
 

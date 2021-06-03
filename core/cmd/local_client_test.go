@@ -48,7 +48,7 @@ func TestClient_RunNodeShowsEnv(t *testing.T) {
 	app.On("Start").Return(nil)
 	app.On("Stop").Return(nil)
 
-	auth := cltest.CallbackAuthenticator{Callback: func(*keystore.EthKeyStore, string) (string, error) { return "", nil }}
+	auth := cltest.CallbackAuthenticator{Callback: func(*keystore.Eth, string) (string, error) { return "", nil }}
 	runner := cltest.BlockedRunner{Done: make(chan struct{})}
 	client := cmd.Client{
 		Config:                 store.Config,
@@ -138,7 +138,7 @@ func TestClient_RunNodeWithPasswords(t *testing.T) {
 			cltest.MustInsertRandomKey(t, store.DB)
 
 			var unlocked bool
-			callback := func(store *keystore.EthKeyStore, phrase string) (string, error) {
+			callback := func(store *keystore.Eth, phrase string) (string, error) {
 				err := keyStore.Eth.Unlock(phrase)
 				unlocked = err == nil
 				return phrase, err
@@ -195,7 +195,7 @@ func TestClient_RunNode_CreateFundingKeyIfNotExists(t *testing.T) {
 	_, err = keyStore.Eth.CreateNewKey()
 	require.NoError(t, err)
 
-	callback := func(store *keystore.EthKeyStore, phrase string) (string, error) {
+	callback := func(store *keystore.Eth, phrase string) (string, error) {
 		unlockErr := keyStore.Eth.Unlock(phrase)
 		return phrase, unlockErr
 	}
@@ -261,7 +261,7 @@ func TestClient_RunNodeWithAPICredentialsFile(t *testing.T) {
 			ethClient.On("BalanceAt", mock.Anything, mock.Anything, mock.Anything).Return(big.NewInt(10), nil)
 			store.EthClient = ethClient
 
-			callback := func(*keystore.EthKeyStore, string) (string, error) { return "", nil }
+			callback := func(*keystore.Eth, string) (string, error) { return "", nil }
 			noauth := cltest.CallbackAuthenticator{Callback: callback}
 			apiPrompt := &cltest.MockAPIInitializer{}
 			client := cmd.Client{
@@ -383,7 +383,7 @@ func TestClient_RebroadcastTransactions_BPTXM(t *testing.T) {
 	ethClient.On("Dial", mock.Anything).Return(nil)
 	store.EthClient = ethClient
 
-	auth := cltest.CallbackAuthenticator{Callback: func(*keystore.EthKeyStore, string) (string, error) { return "", nil }}
+	auth := cltest.CallbackAuthenticator{Callback: func(*keystore.Eth, string) (string, error) { return "", nil }}
 	client := cmd.Client{
 		Config:                 config.Config,
 		AppFactory:             cltest.InstanceAppFactory{App: app},
@@ -468,7 +468,7 @@ func TestClient_RebroadcastTransactions_OutsideRange_BPTXM(t *testing.T) {
 			ethClient.On("Dial", mock.Anything).Return(nil)
 			store.EthClient = ethClient
 
-			auth := cltest.CallbackAuthenticator{Callback: func(*keystore.EthKeyStore, string) (string, error) { return "", nil }}
+			auth := cltest.CallbackAuthenticator{Callback: func(*keystore.Eth, string) (string, error) { return "", nil }}
 			client := cmd.Client{
 				Config:                 config.Config,
 				AppFactory:             cltest.InstanceAppFactory{App: app},

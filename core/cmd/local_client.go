@@ -227,7 +227,7 @@ func logConfigVariables(store *strpkg.Store) error {
 
 func setupFundingKey(ctx context.Context,
 	etClient eth.Client,
-	ethKeyStore *keystore.EthKeyStore,
+	ethKeyStore *keystore.Eth,
 	pwd string,
 ) (key ethkey.Key, balance *big.Int, err error) {
 	key, existed, err := ethKeyStore.EnsureFundingKey()

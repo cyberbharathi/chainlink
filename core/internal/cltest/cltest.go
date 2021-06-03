@@ -615,7 +615,7 @@ func (ta *TestApplication) NewClientAndRenderer() (*cmd.Client, *RendererMock) {
 		Renderer:                       r,
 		Config:                         ta.Config.Config,
 		AppFactory:                     seededAppFactory{ta.ChainlinkApplication},
-		KeyStoreAuthenticator:          CallbackAuthenticator{func(*keystore.EthKeyStore, string) (string, error) { return Password, nil }},
+		KeyStoreAuthenticator:          CallbackAuthenticator{func(*keystore.Eth, string) (string, error) { return Password, nil }},
 		FallbackAPIInitializer:         &MockAPIInitializer{},
 		Runner:                         EmptyRunner{},
 		HTTP:                           NewMockAuthenticatedHTTPClient(ta.Config, sessionID),
@@ -633,7 +633,7 @@ func (ta *TestApplication) NewAuthenticatingClient(prompter cmd.Prompter) *cmd.C
 		Renderer:                       &RendererMock{},
 		Config:                         ta.Config.Config,
 		AppFactory:                     seededAppFactory{ta.ChainlinkApplication},
-		KeyStoreAuthenticator:          CallbackAuthenticator{func(*keystore.EthKeyStore, string) (string, error) { return Password, nil }},
+		KeyStoreAuthenticator:          CallbackAuthenticator{func(*keystore.Eth, string) (string, error) { return Password, nil }},
 		FallbackAPIInitializer:         &MockAPIInitializer{},
 		Runner:                         EmptyRunner{},
 		HTTP:                           cmd.NewAuthenticatedHTTPClient(ta.Config, cookieAuth, models.SessionRequest{}),
@@ -695,8 +695,8 @@ func NewStore(t testing.TB, flagsAndDeps ...interface{}) (*strpkg.Store, func())
 	}
 }
 
-func NewKeyStore(t testing.TB, db *gorm.DB) *keystore.KeyStore {
-	return keystore.NewKeyStore(db, utils.FastScryptParams)
+func NewKeyStore(t testing.TB, db *gorm.DB) *keystore.Master {
+	return keystore.New(db, utils.FastScryptParams)
 }
 
 func cleanUpStore(t testing.TB, store *strpkg.Store) {
@@ -2026,7 +2026,7 @@ func AssertRecordEventually(t *testing.T, store *strpkg.Store, model interface{}
 	}, DBWaitTimeout, DBPollingInterval).Should(gomega.BeTrue())
 }
 
-func MustSendingKeys(t *testing.T, ethKeyStore *keystore.EthKeyStore) (keys []ethkey.Key) {
+func MustSendingKeys(t *testing.T, ethKeyStore *keystore.Eth) (keys []ethkey.Key) {
 	var err error
 	keys, err = ethKeyStore.SendingKeys()
 	require.NoError(t, err)

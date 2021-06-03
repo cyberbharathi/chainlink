@@ -29,7 +29,7 @@ type (
 
 	balanceMonitor struct {
 		store          *store.Store
-		ethKeyStore    *keystore.EthKeyStore
+		ethKeyStore    *keystore.Eth
 		ethBalances    map[gethCommon.Address]*assets.Eth
 		ethBalancesMtx *sync.RWMutex
 		sleeperTask    utils.SleeperTask
@@ -39,7 +39,7 @@ type (
 )
 
 // NewBalanceMonitor returns a new balanceMonitor
-func NewBalanceMonitor(store *store.Store, ethKeyStore *keystore.EthKeyStore) BalanceMonitor {
+func NewBalanceMonitor(store *store.Store, ethKeyStore *keystore.Eth) BalanceMonitor {
 	bm := &balanceMonitor{
 		store:          store,
 		ethKeyStore:    ethKeyStore,

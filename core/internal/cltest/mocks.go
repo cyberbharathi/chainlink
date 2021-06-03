@@ -166,11 +166,11 @@ func (a noopStopApplication) Stop() error {
 
 // CallbackAuthenticator contains a call back authenticator method
 type CallbackAuthenticator struct {
-	Callback func(*keystore.EthKeyStore, string) (string, error)
+	Callback func(*keystore.Eth, string) (string, error)
 }
 
 // Authenticate authenticates store and pwd with the callback authenticator
-func (a CallbackAuthenticator) AuthenticateEthKey(ethKeyStore *keystore.EthKeyStore, pwd string) (string, error) {
+func (a CallbackAuthenticator) AuthenticateEthKey(ethKeyStore *keystore.Eth, pwd string) (string, error) {
 	return a.Callback(ethKeyStore, pwd)
 }
 
@@ -178,7 +178,7 @@ func (a CallbackAuthenticator) AuthenticateVRFKey(*store.Store, string) error {
 	return nil
 }
 
-func (a CallbackAuthenticator) AuthenticateOCRKey(*keystore.OCRKeyStore, *orm.Config, string) error {
+func (a CallbackAuthenticator) AuthenticateOCRKey(*keystore.OCR, *orm.Config, string) error {
 	return nil
 }
 

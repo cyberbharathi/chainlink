@@ -70,7 +70,7 @@ type Application interface {
 	GetLogger() *logger.Logger
 	GetHealthChecker() health.Checker
 	GetStore() *strpkg.Store
-	GetKeyStore() *keystore.KeyStore
+	GetKeyStore() *keystore.Master
 	GetStatsPusher() synchronization.StatsPusher
 	GetHeadBroadcaster() httypes.HeadBroadcasterRegistry
 	WakeSessionReaper()
@@ -114,7 +114,7 @@ type ChainlinkApplication struct {
 	webhookJobRunner         webhook.JobRunner
 	Scheduler                *services.Scheduler
 	Store                    *strpkg.Store
-	KeyStore                 *keystore.KeyStore
+	KeyStore                 *keystore.Master
 	ExternalInitiatorManager ExternalInitiatorManager
 	SessionReaper            utils.SleeperTask
 	shutdownOnce             sync.Once
@@ -148,7 +148,7 @@ func NewApplication(config *orm.Config, ethClient eth.Client, advisoryLocker pos
 	healthChecker := health.NewChecker()
 
 	scryptParams := utils.GetScryptParams(config)
-	keyStore := keystore.NewKeyStore(store.DB, scryptParams)
+	keyStore := keystore.New(store.DB, scryptParams)
 
 	explorerClient := synchronization.ExplorerClient(&synchronization.NoopExplorerClient{})
 	statsPusher := synchronization.StatsPusher(&synchronization.NoopStatsPusher{})
@@ -560,7 +560,7 @@ func (app *ChainlinkApplication) GetStore() *strpkg.Store {
 	return app.Store
 }
 
-func (app *ChainlinkApplication) GetKeyStore() *keystore.KeyStore {
+func (app *ChainlinkApplication) GetKeyStore() *keystore.Master {
 	return app.KeyStore
 }
 

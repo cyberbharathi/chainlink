@@ -38,12 +38,12 @@ type RunExecutor interface {
 
 type runExecutor struct {
 	store       *store.Store
-	keyStore    *keystore.KeyStore
+	keyStore    *keystore.Master
 	statsPusher synchronization.StatsPusher
 }
 
 // NewRunExecutor initializes a RunExecutor.
-func NewRunExecutor(store *store.Store, keyStore *keystore.KeyStore, statsPusher synchronization.StatsPusher) RunExecutor {
+func NewRunExecutor(store *store.Store, keyStore *keystore.Master, statsPusher synchronization.StatsPusher) RunExecutor {
 	return &runExecutor{
 		store:       store,
 		keyStore:    keyStore,

@@ -238,7 +238,7 @@ func TestClient_ImportExportETHKey(t *testing.T) {
 	assert.NoError(t, err)
 
 	scryptParams := utils.GetScryptParams(app.Store.Config)
-	keystore := keystore.NewKeyStore(app.Store.DB, scryptParams).Eth
+	keystore := keystore.New(app.Store.DB, scryptParams).Eth
 	err = keystore.Unlock(string(oldpassword))
 	assert.NoError(t, err)
 	key, err := keystore.ImportKey(keyJSON, strings.TrimSpace(string(newpassword)))

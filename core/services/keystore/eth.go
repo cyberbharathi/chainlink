@@ -56,7 +56,7 @@ type KeyStoreInterface interface { // TODO - RYAN - rename EthKeyStoreInterface
 	ImportKeyFileToDB(keyPath string) (ethkey.Key, error)
 }
 
-var _ KeyStoreInterface = &EthKeyStore{}
+var _ KeyStoreInterface = &Eth{}
 
 type combinedKey struct {
 	DBKey        ethkey.Key
@@ -66,7 +66,7 @@ type combinedKey struct {
 
 // EthKeyStore manages an in-memory key list backed by a database table
 // It never exposes private keys to consumers
-type EthKeyStore struct {
+type Eth struct {
 	db           *gorm.DB
 	password     string
 	scryptParams utils.ScryptParams
@@ -77,16 +77,15 @@ type EthKeyStore struct {
 	subscribersMu *sync.RWMutex
 }
 
-// NewEthKeyStore creates a keystore for the given directory.
-func NewEthKeyStore(db *gorm.DB, scryptParams utils.ScryptParams) *EthKeyStore {
-	return &EthKeyStore{db, "", scryptParams, make([]combinedKey, 0), new(sync.RWMutex), make([](chan struct{}), 0), new(sync.RWMutex)}
+func newEthKeyStore(db *gorm.DB, scryptParams utils.ScryptParams) *Eth {
+	return &Eth{db, "", scryptParams, make([]combinedKey, 0), new(sync.RWMutex), make([](chan struct{}), 0), new(sync.RWMutex)}
 }
 
 // Unlock loads keys from the database, and uses the given password to try to
 // unlock all of them
 // If any key fails to decrypt, returns an error
 // Trying to unlock the keystore multiple times with different passwords will panic
-func (ks *EthKeyStore) Unlock(password string) (merr error) {
+func (ks *Eth) Unlock(password string) (merr error) {
 	ks.mu.Lock()
 	defer ks.mu.Unlock()
 	if ks.password != "" {
@@ -118,7 +117,7 @@ func (ks *EthKeyStore) Unlock(password string) (merr error) {
 	return nil
 }
 
-func (ks *EthKeyStore) isLocked() bool {
+func (ks *Eth) isLocked() bool {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
 	return ks.password == ""
@@ -126,7 +125,7 @@ func (ks *EthKeyStore) isLocked() bool {
 
 // CreateNewKey adds an account to the underlying geth keystore (which
 // writes the file to disk) and inserts the new key to the database
-func (ks *EthKeyStore) CreateNewKey() (k ethkey.Key, err error) {
+func (ks *Eth) CreateNewKey() (k ethkey.Key, err error) {
 	if ks.isLocked() {
 		return k, ErrKeyStoreLocked
 	}
@@ -134,7 +133,7 @@ func (ks *EthKeyStore) CreateNewKey() (k ethkey.Key, err error) {
 }
 
 // EnsureFundingKey ensures that a funding account exists, and returns it
-func (ks *EthKeyStore) EnsureFundingKey() (k ethkey.Key, didExist bool, err error) {
+func (ks *Eth) EnsureFundingKey() (k ethkey.Key, didExist bool, err error) {
 	if ks.isLocked() {
 		return k, false, ErrKeyStoreLocked
 	}
@@ -148,7 +147,7 @@ func (ks *EthKeyStore) EnsureFundingKey() (k ethkey.Key, didExist bool, err erro
 	return k, false, err
 }
 
-func (ks *EthKeyStore) createNewKey(isFunding bool) (k ethkey.Key, err error) {
+func (ks *Eth) createNewKey(isFunding bool) (k ethkey.Key, err error) {
 	dKey, err := newKey()
 	if err != nil {
 		return
@@ -173,11 +172,11 @@ func (ks *EthKeyStore) createNewKey(isFunding bool) (k ethkey.Key, err error) {
 	return key, nil
 }
 
-func (ks *EthKeyStore) encryptKey(dKey *keystore.Key, newPassword string) ([]byte, error) {
+func (ks *Eth) encryptKey(dKey *keystore.Key, newPassword string) ([]byte, error) {
 	return keystore.EncryptKey(dKey, newPassword, ks.scryptParams.N, ks.scryptParams.P)
 }
 
-func (ks *EthKeyStore) getFundingKey() (*ethkey.Key, error) {
+func (ks *Eth) getFundingKey() (*ethkey.Key, error) {
 	fundingKeys, err := ks.FundingKeys()
 	if err != nil {
 		return nil, err
@@ -189,7 +188,7 @@ func (ks *EthKeyStore) getFundingKey() (*ethkey.Key, error) {
 }
 
 // SignTx uses the unlocked account to sign the given transaction.
-func (ks *EthKeyStore) SignTx(fromAddress common.Address, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
+func (ks *Eth) SignTx(fromAddress common.Address, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	if ks.isLocked() {
 		return nil, ErrKeyStoreLocked
 	}
@@ -203,7 +202,7 @@ func (ks *EthKeyStore) SignTx(fromAddress common.Address, tx *types.Transaction,
 	return types.SignTx(tx, signer, dKey.PrivateKey)
 }
 
-func (ks *EthKeyStore) getDecryptedKeyForAddress(addr common.Address) *keystore.Key {
+func (ks *Eth) getDecryptedKeyForAddress(addr common.Address) *keystore.Key {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
 	for _, cKey := range ks.keys {
@@ -215,7 +214,7 @@ func (ks *EthKeyStore) getDecryptedKeyForAddress(addr common.Address) *keystore.
 }
 
 // HasSendingKeyWithAddress returns true if keystore has an account with the given address
-func (ks *EthKeyStore) HasSendingKeyWithAddress(address common.Address) (bool, error) {
+func (ks *Eth) HasSendingKeyWithAddress(address common.Address) (bool, error) {
 	if ks.isLocked() {
 		return false, ErrKeyStoreLocked
 	}
@@ -230,7 +229,7 @@ func (ks *EthKeyStore) HasSendingKeyWithAddress(address common.Address) (bool, e
 }
 
 // GetKeyByAddress returns the account matching the address provided, or an error if it is missing
-func (ks *EthKeyStore) GetKeyByAddress(address common.Address) (ethkey.Key, error) {
+func (ks *Eth) GetKeyByAddress(address common.Address) (ethkey.Key, error) {
 	if ks.isLocked() {
 		return ethkey.Key{}, ErrKeyStoreLocked
 	}
@@ -245,13 +244,13 @@ func (ks *EthKeyStore) GetKeyByAddress(address common.Address) (ethkey.Key, erro
 }
 
 // ImportKey adds a new key to the keystore and inserts to DB
-func (ks *EthKeyStore) ImportKey(keyJSON []byte, oldPassword string) (key ethkey.Key, err error) {
+func (ks *Eth) ImportKey(keyJSON []byte, oldPassword string) (key ethkey.Key, err error) {
 	if ks.isLocked() {
 		return key, ErrKeyStoreLocked
 	}
 	dKey, err := keystore.DecryptKey(keyJSON, oldPassword)
 	if err != nil {
-		return key, errors.Wrap(err, "EthKeyStore#ImportKey failed to decrypt key")
+		return key, errors.Wrap(err, "Eth#ImportKey failed to decrypt key")
 	}
 	exportedJSON, err := ks.encryptKey(dKey, ks.password)
 	if err != nil {
@@ -274,7 +273,7 @@ func (ks *EthKeyStore) ImportKey(keyJSON []byte, oldPassword string) (key ethkey
 }
 
 // ExportKey exports as a JSON key, encrypted with newPassword
-func (ks *EthKeyStore) ExportKey(address common.Address, newPassword string) ([]byte, error) {
+func (ks *Eth) ExportKey(address common.Address, newPassword string) ([]byte, error) {
 	if ks.isLocked() {
 		return nil, ErrKeyStoreLocked
 	}
@@ -294,7 +293,7 @@ func (ks *EthKeyStore) ExportKey(address common.Address, newPassword string) ([]
 
 // AddKey inserts the key to the database and adds it to the keystore's memory keys
 // It modifies the given key (adding created_at etc)
-func (ks *EthKeyStore) AddKey(key *ethkey.Key) error {
+func (ks *Eth) AddKey(key *ethkey.Key) error {
 	if ks.isLocked() {
 		return ErrKeyStoreLocked
 	}
@@ -315,7 +314,7 @@ func (ks *EthKeyStore) AddKey(key *ethkey.Key) error {
 
 // RemoveKey removes a key from the keystore
 // If hard delete is set to true, removes the key from the database. If false, the key has its deleted_at set to a non-null value.
-func (ks *EthKeyStore) RemoveKey(address common.Address, hardDelete bool) (removedKey ethkey.Key, err error) {
+func (ks *Eth) RemoveKey(address common.Address, hardDelete bool) (removedKey ethkey.Key, err error) {
 	if ks.isLocked() {
 		return removedKey, ErrKeyStoreLocked
 	}
@@ -349,7 +348,7 @@ func (ks *EthKeyStore) RemoveKey(address common.Address, hardDelete bool) (remov
 
 // SubscribeToKeyChanges returns a channel that will fire if a key is added or removed
 // Consumers should call unsubscribe when they are done to close the channel
-func (ks *EthKeyStore) SubscribeToKeyChanges() (ch chan struct{}, unsubscribe func()) {
+func (ks *Eth) SubscribeToKeyChanges() (ch chan struct{}, unsubscribe func()) {
 	ch = make(chan struct{}, 1)
 	ks.subscribersMu.Lock()
 	defer ks.subscribersMu.Unlock()
@@ -366,7 +365,7 @@ func (ks *EthKeyStore) SubscribeToKeyChanges() (ch chan struct{}, unsubscribe fu
 	}
 }
 
-func (ks *EthKeyStore) notify() {
+func (ks *Eth) notify() {
 	ks.subscribersMu.RLock()
 	defer ks.subscribersMu.RUnlock()
 	for _, ch := range ks.subscribers {
@@ -378,7 +377,7 @@ func (ks *EthKeyStore) notify() {
 }
 
 // AllKeys returns all keys
-func (ks *EthKeyStore) AllKeys() (keys []ethkey.Key, err error) {
+func (ks *Eth) AllKeys() (keys []ethkey.Key, err error) {
 	if ks.isLocked() {
 		return nil, ErrKeyStoreLocked
 	}
@@ -392,7 +391,7 @@ func (ks *EthKeyStore) AllKeys() (keys []ethkey.Key, err error) {
 }
 
 // SendingKeys will return only the keys that are is_funding=false
-func (ks *EthKeyStore) SendingKeys() (keys []ethkey.Key, err error) {
+func (ks *Eth) SendingKeys() (keys []ethkey.Key, err error) {
 	if ks.isLocked() {
 		return nil, ErrKeyStoreLocked
 	}
@@ -407,7 +406,7 @@ func (ks *EthKeyStore) SendingKeys() (keys []ethkey.Key, err error) {
 }
 
 // FundingKeys will return only the keys that are is_funding=true
-func (ks *EthKeyStore) FundingKeys() (keys []ethkey.Key, err error) {
+func (ks *Eth) FundingKeys() (keys []ethkey.Key, err error) {
 	if ks.isLocked() {
 		return nil, ErrKeyStoreLocked
 	}
@@ -422,7 +421,7 @@ func (ks *EthKeyStore) FundingKeys() (keys []ethkey.Key, err error) {
 }
 
 // KeyByAddress returns the key matching provided address
-func (ks *EthKeyStore) KeyByAddress(address common.Address) (ethkey.Key, error) {
+func (ks *Eth) KeyByAddress(address common.Address) (ethkey.Key, error) {
 	if ks.isLocked() {
 		return ethkey.Key{}, ErrKeyStoreLocked
 	}
@@ -439,7 +438,7 @@ func (ks *EthKeyStore) KeyByAddress(address common.Address) (ethkey.Key, error) 
 // GetRoundRobinAddress gets the address of the "next" available sending key (i.e. the least recently used key)
 // This takes an optional param for a slice of addresses it should pick from. Leave empty to pick from all
 // addresses in the keystore.
-func (ks *EthKeyStore) GetRoundRobinAddress(whitelist ...common.Address) (address common.Address, err error) {
+func (ks *Eth) GetRoundRobinAddress(whitelist ...common.Address) (address common.Address, err error) {
 	if ks.isLocked() {
 		return common.Address{}, ErrKeyStoreLocked
 	}
@@ -486,7 +485,7 @@ func (ks *EthKeyStore) GetRoundRobinAddress(whitelist ...common.Address) (addres
 }
 
 // HasDBSendingKeys returns true if any key in the database is a sending key
-func (ks *EthKeyStore) HasDBSendingKeys() (exists bool, err error) {
+func (ks *Eth) HasDBSendingKeys() (exists bool, err error) {
 	err = postgres.DBWithDefaultContext(ks.db, func(db *gorm.DB) error {
 		return db.Raw(`SELECT EXISTS(SELECT 1 FROM keys WHERE is_funding=false)`).Scan(&exists).Error
 	})
@@ -494,7 +493,7 @@ func (ks *EthKeyStore) HasDBSendingKeys() (exists bool, err error) {
 }
 
 // ImportKeyFileToDB reads a file and writes the key to the database
-func (ks *EthKeyStore) ImportKeyFileToDB(keyPath string) (k ethkey.Key, err error) {
+func (ks *Eth) ImportKeyFileToDB(keyPath string) (k ethkey.Key, err error) {
 	k, err = ethkey.NewKeyFromFile(keyPath)
 	if err != nil {
 		return k, errors.Wrap(err, "could not import key from file")
@@ -505,7 +504,7 @@ func (ks *EthKeyStore) ImportKeyFileToDB(keyPath string) (k ethkey.Key, err erro
 
 // loadDBKeys returns a map of all of the keys saved in the database
 // including the funding key.
-func (ks *EthKeyStore) loadDBKeys() (keys []ethkey.Key, err error) {
+func (ks *Eth) loadDBKeys() (keys []ethkey.Key, err error) {
 	err = postgres.DBWithDefaultContext(ks.db, func(db *gorm.DB) error {
 		return db.Order("created_at ASC, address ASC").Where("deleted_at IS NULL").Find(&keys).Error
 	})
@@ -514,7 +513,7 @@ func (ks *EthKeyStore) loadDBKeys() (keys []ethkey.Key, err error) {
 
 // insertKeyIfNotExists inserts a key if a key with that address doesn't exist already
 // If a key with this address exists, it does nothing
-func (ks *EthKeyStore) insertKeyIfNotExists(k *ethkey.Key) error {
+func (ks *Eth) insertKeyIfNotExists(k *ethkey.Key) error {
 	err := ks.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "address"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{"deleted_at": nil}),

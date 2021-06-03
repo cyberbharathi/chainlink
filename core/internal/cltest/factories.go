@@ -468,7 +468,7 @@ func NewRunInputWithResult(value interface{}) models.RunInput {
 	return *models.NewRunInputWithResult(jr, taskRunID, value, models.RunStatusUnstarted)
 }
 
-func NewPollingDeviationChecker(t *testing.T, s *strpkg.Store, eks *keystore.EthKeyStore) *fluxmonitor.PollingDeviationChecker {
+func NewPollingDeviationChecker(t *testing.T, s *strpkg.Store, eks *keystore.Eth) *fluxmonitor.PollingDeviationChecker {
 	fluxAggregator := new(mocks.FluxAggregator)
 	runManager := new(mocks.RunManager)
 	fetcher := new(mocks.Fetcher)
@@ -657,7 +657,7 @@ func MustInsertFatalErrorEthTx(t *testing.T, store *strpkg.Store, fromAddress co
 	return etx
 }
 
-func MustAddRandomKeyToKeystore(t testing.TB, ethKeyStore *keystore.EthKeyStore, opts ...interface{}) (ethkey.Key, common.Address) {
+func MustAddRandomKeyToKeystore(t testing.TB, ethKeyStore *keystore.Eth, opts ...interface{}) (ethkey.Key, common.Address) {
 	t.Helper()
 
 	k := MustGenerateRandomKey(t, opts...)
@@ -666,7 +666,7 @@ func MustAddRandomKeyToKeystore(t testing.TB, ethKeyStore *keystore.EthKeyStore,
 	return k, k.Address.Address()
 }
 
-func MustAddKeyToKeystore(t testing.TB, key *ethkey.Key, ethKeyStore *keystore.EthKeyStore) {
+func MustAddKeyToKeystore(t testing.TB, key *ethkey.Key, ethKeyStore *keystore.Eth) {
 	t.Helper()
 
 	err := ethKeyStore.Unlock(Password)
@@ -825,7 +825,7 @@ func MustInsertKeeperJob(t *testing.T, store *strpkg.Store, from ethkey.EIP55Add
 	return specDB
 }
 
-func MustInsertKeeperRegistry(t *testing.T, store *strpkg.Store, ethKeyStore *keystore.EthKeyStore) (keeper.Registry, job.Job) {
+func MustInsertKeeperRegistry(t *testing.T, store *strpkg.Store, ethKeyStore *keystore.Eth) (keeper.Registry, job.Job) {
 	key, _ := MustAddRandomKeyToKeystore(t, ethKeyStore)
 	from := key.Address
 	t.Helper()

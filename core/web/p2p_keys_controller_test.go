@@ -109,7 +109,7 @@ func TestP2PKeysController_Delete_HappyPath(t *testing.T) {
 	assert.Equal(t, initialLength, len(keys))
 }
 
-func setupP2PKeysControllerTests(t *testing.T) (cltest.HTTPClientCleaner, *keystore.OCRKeyStore) {
+func setupP2PKeysControllerTests(t *testing.T) (cltest.HTTPClientCleaner, *keystore.OCR) {
 	t.Helper()
 
 	app, cleanup := cltest.NewApplication(t)

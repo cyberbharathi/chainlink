@@ -15,7 +15,7 @@ import (
 type Delegate struct {
 	db             *gorm.DB
 	store          *corestore.Store
-	ethKeyStore    *keystore.EthKeyStore
+	ethKeyStore    *keystore.Eth
 	jobORM         job.ORM
 	pipelineORM    pipeline.ORM
 	pipelineRunner pipeline.Runner
@@ -27,7 +27,7 @@ type Delegate struct {
 // NewDelegate constructs a new delegate
 func NewDelegate(
 	store *corestore.Store,
-	ethKeyStore *keystore.EthKeyStore,
+	ethKeyStore *keystore.Eth,
 	jobORM job.ORM,
 	pipelineORM pipeline.ORM,
 	pipelineRunner pipeline.Runner,
