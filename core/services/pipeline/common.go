@@ -237,6 +237,8 @@ const (
 	TaskTypeCBORParse       TaskType = "cborparse"
 	TaskTypeAny             TaskType = "any"
 	TaskTypeVRF             TaskType = "vrf"
+	TaskTypeETHCall         TaskType = "ethcall"
+	TaskTypeETHTx           TaskType = "ethtx"
 	TaskTypeETHABIEncode    TaskType = "ethabiencode"
 	TaskTypeETHABIDecode    TaskType = "ethabidecode"
 	TaskTypeETHABIDecodeLog TaskType = "ethabidecodelog"

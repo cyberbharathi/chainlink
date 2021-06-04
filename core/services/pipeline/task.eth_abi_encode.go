@@ -31,7 +31,7 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 
 	var (
 		inputValues MapParam
-		theABI      StringParam
+		theABI      BytesParam
 	)
 	err = multierr.Combine(
 		errors.Wrap(ResolveParam(&inputValues, From(VarExpr(t.Data, vars), JSONWithVarExprs(t.Data, vars, false), nil)), "data"),
@@ -41,7 +41,7 @@ func (t *ETHABIEncodeTask) Run(_ context.Context, vars Vars, _ JSONSerializable,
 		return Result{Error: err}
 	}
 
-	methodName, args, _, err := parseABIString(string(theABI), false)
+	methodName, args, _, err := parseETHABIString([]byte(theABI), false)
 	if err != nil {
 		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
 	}

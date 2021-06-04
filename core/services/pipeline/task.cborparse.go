@@ -21,15 +21,16 @@ func (t *CBORParseTask) Type() TaskType {
 }
 
 func (t *CBORParseTask) Run(_ context.Context, vars Vars, _ JSONSerializable, inputs []Result) (result Result) {
-	_, err := CheckInputs(inputs, 0, 1, 0)
+	_, err := CheckInputs(inputs, -1, -1, 0)
 	if err != nil {
 		return Result{Error: err}
 	}
 
-	var data BytesParam
-
+	var (
+		data BytesParam
+	)
 	err = multierr.Combine(
-		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data, vars), Input(inputs, 0))), "data"),
+		errors.Wrap(ResolveParam(&data, From(VarExpr(t.Data, vars))), "data"),
 	)
 	if err != nil {
 		return Result{Error: err}
@@ -39,5 +40,9 @@ func (t *CBORParseTask) Run(_ context.Context, vars Vars, _ JSONSerializable, in
 	if err != nil {
 		return Result{Error: errors.Wrapf(ErrBadInput, "CBORParse: %v", err)}
 	}
-	return Result{Value: parsed}
+	m, ok := parsed.Result.Value().(map[string]interface{})
+	if !ok {
+		return Result{Error: errors.Wrapf(ErrBadInput, "CBORParse: expected map[string]interface{}, got %T", parsed.Result.Value())}
+	}
+	return Result{Value: m}
 }

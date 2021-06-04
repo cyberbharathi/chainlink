@@ -28,7 +28,7 @@ func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializab
 	}
 
 	var (
-		theABI StringParam
+		theABI BytesParam
 		data   BytesParam
 		topics HashSliceParam
 	)
@@ -41,7 +41,7 @@ func (t *ETHABIDecodeLogTask) Run(_ context.Context, vars Vars, _ JSONSerializab
 		return Result{Error: err}
 	}
 
-	_, args, indexedArgs, err := parseABIString(string(theABI), true)
+	_, args, indexedArgs, err := parseETHABIString([]byte(theABI), true)
 	if err != nil {
 		return Result{Error: errors.Wrap(ErrBadInput, err.Error())}
 	}
